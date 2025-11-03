@@ -109,12 +109,10 @@ def index():
 def acessar_aluno():
     aluno = None
 
-    # Se o aluno veio por GET (ex: botão "Voltar"), recupera pelo ID
     aluno_id = request.args.get('aluno_id', type=int)
     if aluno_id:
         aluno = Aluno.query.get(aluno_id)
 
-    # Se veio por POST (login)
     if request.method == 'POST':
         matricula = request.form['matricula']
         senha = request.form['senha']
@@ -227,7 +225,35 @@ def cadastrar_horario():
             return redirect(url_for('acessar_aluno'))
 
         aluno = Aluno.query.get_or_404(aluno_id)
-        return render_template('cadastrar_horario.html', aluno=aluno)
+
+        hoje = datetime.now()
+        weekday_map = {
+            0: 'Segunda', 1: 'Terça', 2: 'Quarta',
+            3: 'Quinta', 4: 'Sexta', 5: 'Sábado', 6: 'Domingo'
+        }
+        dia_hoje = weekday_map[hoje.weekday()]
+
+        if dia_hoje in ['Segunda','Terça','Quarta','Quinta','Sexta']:
+            dia_disponivel = dia_hoje
+        elif dia_hoje == 'Sexta' and 16 <= hoje.hour < 20:
+            dia_disponivel = 'Sábado'
+        else:
+            dia_disponivel = None
+
+        if not dia_disponivel:
+            flash('Hoje não há disponibilidade para agendamento (domingo, feriado ou fora do horário permitido).', 'warning')
+            return redirect(url_for('acessar_aluno', aluno_id=aluno.id))
+
+        horarios = Horario.query.filter_by(faixa=aluno.faixa, dia_semana=dia_disponivel).all()
+
+        return render_template(
+            'cadastrar_horario.html',
+            aluno=aluno,
+            horarios=horarios,
+            DIA_DISPONIVEL=dia_disponivel,
+            CUTOFF_HOUR=CUTOFF_HOUR,
+            NOW_HOUR=hoje.hour
+        )
 
     elif request.method == 'POST':
         aluno_id = request.form.get('aluno_id')
@@ -244,27 +270,15 @@ def cadastrar_horario():
             return redirect(url_for('cadastrar_horario', aluno_id=aluno_id))
 
         hoje = datetime.now()
-        dia_semana_atual = hoje.strftime('%A')
-        mapa_dias = {
-            'Monday': 'Segunda',
-            'Tuesday': 'Terça',
-            'Wednesday': 'Quarta',
-            'Thursday': 'Quinta',
-            'Friday': 'Sexta',
-            'Saturday': 'Sábado',
-            'Sunday': 'Domingo'
+        weekday_map = {
+            'Monday': 'Segunda', 'Tuesday': 'Terça', 'Wednesday': 'Quarta',
+            'Thursday': 'Quinta', 'Friday': 'Sexta', 'Saturday': 'Sábado', 'Sunday': 'Domingo'
         }
-        dia_atual_portugues = mapa_dias[dia_semana_atual]
+        dia_atual_port = weekday_map[hoje.strftime('%A')]
 
-        if dia_semana == dia_atual_portugues and dia_semana != 'Sábado':
-            if hoje.hour >= 14:
-                flash('Regra de agendamento: para aulas no mesmo dia (segunda a sexta), o agendamento deve ser feito até as 14h.', 'danger')
-                return redirect(url_for('meus_agendamentos', aluno_id=aluno_id))
-
-        if dia_semana == 'Sábado':
-            if not (dia_atual_portugues == 'Sexta' and 16 <= hoje.hour < 20):
-                flash('Regra de agendamento: aulas de sábado só podem ser agendadas na sexta-feira, entre 16h e 20h.', 'danger')
-                return redirect(url_for('meus_agendamentos', aluno_id=aluno_id))
+        if dia_semana == dia_atual_port and hoje.hour >= CUTOFF_HOUR:
+            flash(f'Regra de agendamento: para aulas no mesmo dia (segunda a sexta), o agendamento deve ser feito até as {CUTOFF_HOUR}h.', 'danger')
+            return redirect(url_for('meus_agendamentos', aluno_id=aluno_id))
 
         horario = Horario.query.filter_by(dia_semana=dia_semana, hora=hora, faixa=faixa).first()
         if not horario:
