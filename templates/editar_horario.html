@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Editar Horário{% endblock %}
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="logo-title">Editar Horário</div>
+
+    <div class="card p-4">
+      <form method="POST">
+        <div class="mb-3">
+          <label class="form-label">Dia da Semana</label>
+          <select name="dia_semana" class="form-select" required>
+            {% for dia in ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado'] %}
+              <option value="{{ dia }}" {% if horario.dia_semana == dia %}selected{% endif %}>{{ dia }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Hora</label>
+          <input type="time" name="hora" class="form-control" value="{{ horario.hora }}" required>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Faixa</label>
+          <input type="text" name="faixa" class="form-control" value="{{ horario.faixa }}" required>
+        </div>
+
+        <button type="submit" class="btn btn-success">Salvar alterações</button>
+        <a href="{{ url_for('gerenciar_horarios') }}" class="btn btn-secondary">Cancelar</a>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

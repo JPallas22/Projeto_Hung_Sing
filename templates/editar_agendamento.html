@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Editar Agendamento{% endblock %}
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="logo-title">Editar Agendamento</div>
+
+    <div class="card p-4">
+      <p class="mb-1"><strong>Aluno:</strong> {{ aluno.nome }}</p>
+      <p class="mb-3">
+        <strong>Agendamento atual:</strong>
+        {{ agendamento.horario.dia_semana }} — {{ agendamento.horario.hora }} ({{ agendamento.horario.faixa }})
+      </p>
+
+      <form method="POST">
+        <div class="mb-3">
+          <label class="form-label">Novo horário (mesmo dia e faixa)</label>
+          <select name="horario_id" class="form-select" required>
+            {% for h in horarios_opcoes %}
+              <option value="{{ h.id }}" {% if h.id == agendamento.horario_id %}selected{% endif %}>
+                {{ h.dia_semana }} — {{ h.hora }} ({{ h.faixa }})
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-success">Salvar alterações</button>
+        <a href="{{ url_for('meus_agendamentos', aluno_id=aluno.id) }}" class="btn btn-secondary">Cancelar</a>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const cutoff = {{ CUTOFF_HOUR if CUTOFF_HOUR is defined else 14 }};
+  const nowHour = {{ NOW_HOUR if NOW_HOUR is defined else 0 }};
+  const now = new Date();
+  const weekdayNames = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const todayName = weekdayNames[now.getDay()];
+  const diaAtual = '{{ agendamento.horario.dia_semana }}';
+
+  if (diaAtual === todayName && nowHour >= cutoff) {
+    // Desabilita submissão visualmente (back-end já bloqueia)
+    const btn = document.querySelector('button[type="submit"]');
+    if (btn) {
+      btn.classList.remove('btn-success');
+      btn.classList.add('btn-secondary');
+      btn.addEventListener('click', function(e){
+        e.preventDefault();
+        alert('Edição para hoje permitida apenas até ' + cutoff + ':00.');
+      });
+    }
+  }
+})();
+</script>
+
+{% endblock %}

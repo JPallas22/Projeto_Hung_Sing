@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Meus Agendamentos{% endblock %}
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="logo-title">Meus Agendamentos</div>
+
+    <div class="card p-4">
+      {% if agendamentos %}
+        <table class="table table-striped align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Dia da Semana</th>
+              <th>Hora</th>
+              <th>Faixa</th>
+              <th style="width:200px;">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ag in agendamentos %}
+              <tr>
+                <td>{{ ag.horario.dia_semana }}</td>
+                <td>{{ ag.horario.hora }}</td>
+                <td>{{ ag.horario.faixa }}</td>
+                <td class="d-flex gap-2">
+                  <a href="{{ url_for('editar_agendamento', agendamento_id=ag.id) }}"
+                     class="btn btn-sm btn-primary btn-editar"
+                     data-dia="{{ ag.horario.dia_semana }}">
+                     Editar
+                  </a>
+                  <a href="{{ url_for('excluir_agendamento', agendamento_id=ag.id) }}"
+                     class="btn btn-sm btn-danger btn-excluir"
+                     data-dia="{{ ag.horario.dia_semana }}">
+                     Excluir
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="alert alert-info text-center">
+          Você ainda não possui agendamentos cadastrados.
+        </div>
+      {% endif %}
+
+      <div class="mt-4 d-flex justify-content-between">
+        <a href="{{ url_for('acessar_aluno', aluno_id=aluno.id) }}" class="btn btn-secondary">Voltar</a>
+        <a href="{{ url_for('cadastrar_horario', aluno_id=aluno.id) }}" class="btn btn-success">Agendar novo horário</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const cutoff = {{ CUTOFF_HOUR if CUTOFF_HOUR is defined else 14 }};
+  const serverHour = {{ NOW_HOUR if NOW_HOUR is defined else 0 }};
+  const now = new Date();
+  const browserHour = now.getHours();
+  const hour = serverHour || browserHour; // prioriza servidor, fallback navegador
+
+  const weekdayNames = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const todayName = weekdayNames[now.getDay()];
+
+  function disableAfterCutoff(selector) {
+    document.querySelectorAll(selector).forEach(btn => {
+      const dia = btn.dataset.dia;
+      if (dia === todayName && hour >= cutoff) {
+        btn.classList.remove('btn-primary','btn-danger');
+        btn.classList.add('btn-secondary');
+        btn.setAttribute('aria-disabled','true');
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          alert('Alterações/Exclusões para hoje são permitidas apenas até ' + cutoff + ':00.');
+        });
+      }
+    });
+  }
+
+  disableAfterCutoff('.btn-editar');
+  disableAfterCutoff('.btn-excluir');
+})();
+</script>
+
+{% endblock %}

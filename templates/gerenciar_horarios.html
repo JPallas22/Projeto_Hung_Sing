@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Gerenciar Horários{% endblock %}
+{% block content %}
+
+<div class="row justify-content-center">
+  <div class="col-md-10">
+    <div class="logo-title">Gerenciar Horários de Aula</div>
+
+    <div class="card p-4">
+      <h4 class="mb-3">Horários cadastrados</h4>
+
+      {% if horarios %}
+        <table class="table table-bordered align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Dia da Semana</th>
+              <th>Hora</th>
+              <th>Faixa</th>
+              <th style="width:150px;">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for h in horarios %}
+              <tr>
+                <td>{{ h.dia_semana }}</td>
+                <td>{{ h.hora }}</td>
+                <td>{{ h.faixa }}</td>
+                <td>
+                  <a href="{{ url_for('editar_horario', horario_id=h.id) }}" class="btn btn-sm btn-primary">Editar</a>
+                  <a href="{{ url_for('excluir_horario', horario_id=h.id) }}" class="btn btn-sm btn-danger">Excluir</a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="alert alert-info">Nenhum horário cadastrado.</div>
+      {% endif %}
+
+      <hr>
+      <h5 class="mb-3">Adicionar novo horário</h5>
+
+      <form method="POST" action="{{ url_for('gerenciar_horarios') }}">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Dia da Semana</label>
+            <select name="dia_semana" class="form-select" required>
+              <option value="">Selecione...</option>
+              <option>Segunda</option>
+              <option>Terça</option>
+              <option>Quarta</option>
+              <option>Quinta</option>
+              <option>Sexta</option>
+              <option>Sábado</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Hora</label>
+            <input type="time" name="hora" class="form-control" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Faixa</label>
+            <input type="text" name="faixa" class="form-control" placeholder="Ex: Branca, Azul..." required>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-success mt-3">Adicionar</button>
+      </form>
+
+      <div class="mt-4">
+        <a href="{{ url_for('admin_painel') }}" class="btn btn-secondary">Voltar ao Painel</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
