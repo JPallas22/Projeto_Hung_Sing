@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from flask import flash, get_flashed_messages
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from calendar import monthrange
 import json
 
@@ -30,6 +30,37 @@ def load_holidays():
 
 def is_holiday(d: date) -> bool:
     return d.isoformat() in load_holidays()
+
+WEEKDAY_IDX = {'Segunda':0, 'Terça':1, 'Quarta':2, 'Quinta':3, 'Sexta':4, 'Sábado':5, 'Domingo':6}
+WEEKDAY_ABBR = {'Segunda':'Seg', 'Terça':'Ter', 'Quarta':'Qua', 'Quinta':'Qui', 'Sexta':'Sex', 'Sábado':'Sáb', 'Domingo':'Dom'}
+MONTH_ABBR_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+
+def date_for_weekday_pt(dia_semana_pt: str, base: date | None = None) -> date:
+    """Retorna a data (dentro desta semana) correspondente ao dia_semana_pt."""
+    base = base or date.today()
+    target = WEEKDAY_IDX[dia_semana_pt]
+    delta = (target - base.weekday()) % 7
+    return base + timedelta(days=delta)
+
+def label_semana_dia(dia_semana_pt: str, base: date | None = None) -> str:
+    """Formata 'Seg 03 Nov' para o dia informado, relativo à semana do 'base' (hoje por padrão)."""
+    d = date_for_weekday_pt(dia_semana_pt, base)
+    abbr_w = WEEKDAY_ABBR[dia_semana_pt]
+    abbr_m = MONTH_ABBR_PT[d.month - 1]
+    return f"{abbr_w} {d.strftime('%d')} {abbr_m}"
+
+CANCELAMENTOS_PATH = 'config/cancelamentos.json'
+
+def load_cancelamentos():
+    try:
+        with open(CANCELAMENTOS_PATH, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+def save_cancelamentos(data):
+    with open(CANCELAMENTOS_PATH, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
 
 CUTOFF_HOUR = 14
 
@@ -180,11 +211,16 @@ def login_aluno():
 
             horarios = Horario.query.filter_by(faixa=faixa, dia_semana=dia_disponivel).all()
 
-            return render_template('horarios_aluno.html',
-                                   aluno=aluno,
-                                   horarios=horarios,
-                                   CUTOFF_HOUR=CUTOFF_HOUR,
-                                   DIA_DISPONIVEL=dia_disponivel)
+            return render_template(
+                'horarios_aluno.html',  
+                aluno=aluno,
+                horarios=horarios,
+                CUTOFF_HOUR=CUTOFF_HOUR,
+                NOW_HOUR=hoje.hour,
+                DIA_DISPONIVEL=dia_disponivel,
+                DIA_LABEL=label_semana_dia(dia_disponivel, hoje.date())
+)
+
         else:
             flash('Matrícula ou senha inválidos!', 'danger')
 
@@ -233,7 +269,7 @@ def cadastrar_horario():
         }
         dia_hoje = weekday_map[hoje.weekday()]
 
-        if dia_hoje in ['Segunda','Terça','Quarta','Quinta','Sexta']:
+        if dia_hoje in ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta']:
             dia_disponivel = dia_hoje
         elif dia_hoje == 'Sexta' and 16 <= hoje.hour < 20:
             dia_disponivel = 'Sábado'
@@ -246,11 +282,18 @@ def cadastrar_horario():
 
         horarios = Horario.query.filter_by(faixa=aluno.faixa, dia_semana=dia_disponivel).all()
 
+        bloqueios = load_cancelamentos()
+        data_hoje_str = datetime.now().date().isoformat()
+        if data_hoje_str in bloqueios:
+            horarios_liberados = bloqueios[data_hoje_str]
+            horarios = [h for h in horarios if h.hora in horarios_liberados]
+
         return render_template(
             'cadastrar_horario.html',
             aluno=aluno,
             horarios=horarios,
             DIA_DISPONIVEL=dia_disponivel,
+            DIA_LABEL=label_semana_dia(dia_disponivel, hoje.date()),
             CUTOFF_HOUR=CUTOFF_HOUR,
             NOW_HOUR=hoje.hour
         )
@@ -623,6 +666,32 @@ def editar_calendario():
         return redirect(url_for('editar_calendario'))
 
     return render_template('editar_calendario.html', holidays=holidays)
+
+@app.route('/gerenciar_bloqueios', methods=['GET', 'POST'])
+@login_required
+def gerenciar_bloqueios():
+    bloqueios = load_cancelamentos()
+    data_hoje = datetime.now().date().isoformat()
+
+    if request.method == 'POST':
+        data = request.form.get('data')
+        horarios_liberados = request.form.getlist('horarios')
+
+        if not data:
+            flash('Selecione uma data.', 'warning')
+            return redirect(url_for('gerenciar_bloqueios'))
+
+        bloqueios[data] = horarios_liberados
+        save_cancelamentos(bloqueios)
+        flash(f'Bloqueio salvo para o dia {data}.', 'success')
+        return redirect(url_for('gerenciar_bloqueios'))
+
+    return render_template(
+        'gerenciar_bloqueios.html',
+        bloqueios=bloqueios,
+        horarios=Horario.query.order_by(Horario.dia_semana, Horario.hora).all(),
+        data_hoje=data_hoje
+    )
 
 @app.route('/remover_feriado/<data>')
 @login_required

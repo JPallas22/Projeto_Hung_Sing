@@ -25,8 +25,9 @@
         {% if DIA_DISPONIVEL %}
         <div class="card p-4">
             <h5 class="text-center mb-3">
-                Dia disponível para agendamento: <strong>{{ DIA_DISPONIVEL }}</strong>
+                Dia disponível para agendamento: <strong>{{ DIA_LABEL }}</strong>
             </h5>
+
 
             {% if horarios %}
             <form method="post" action="{{ url_for('cadastrar_horario') }}">
