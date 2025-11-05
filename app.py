@@ -190,19 +190,40 @@ def login_aluno():
             dia_hoje = weekday_map[hoje.weekday()]
             dia_disponivel = None
 
-            if dia_hoje in ['Segunda','Terça','Quarta','Quinta','Sexta']:
-                if hoje.hour < CUTOFF_HOUR:
-                    dia_disponivel = dia_hoje
-            elif dia_hoje == 'Sexta' and 16 <= hoje.hour < 20:
-                dia_disponivel = 'Sábado'
-            else:
-                dia_disponivel = None
-
+            # Domingo ou feriado: sem agendamento
             if dia_hoje == 'Domingo' or is_holiday(hoje.date()):
                 dia_disponivel = None
+            # Segunda a Quinta: pode agendar no mesmo dia até 14h
+            elif dia_hoje in ['Segunda','Terça','Quarta','Quinta']:
+                if hoje.hour < CUTOFF_HOUR:
+                    dia_disponivel = dia_hoje
+            # Sexta: pode agendar no mesmo dia até 14h OU agendar sábado entre 16h-20h
+            elif dia_hoje == 'Sexta':
+                if hoje.hour < CUTOFF_HOUR:
+                    dia_disponivel = 'Sexta'
+                elif 16 <= hoje.hour < 20:
+                    dia_disponivel = 'Sábado'
+            # Sábado: pode agendar no mesmo dia até 14h
+            elif dia_hoje == 'Sábado':
+                if hoje.hour < CUTOFF_HOUR:
+                    dia_disponivel = 'Sábado'
 
             if not dia_disponivel:
-                flash('Hoje não há disponibilidade para agendamento (domingo, feriado ou fora do horário permitido).', 'warning')
+                if dia_hoje == 'Domingo':
+                    msg = 'Agendamentos não são permitidos aos domingos.'
+                elif is_holiday(hoje.date()):
+                    msg = 'Hoje é feriado. Agendamentos não são permitidos em feriados.'
+                elif dia_hoje == 'Sexta' and hoje.hour >= CUTOFF_HOUR and hoje.hour < 16:
+                    msg = f'Para agendar aulas de sexta, faça o agendamento até as {CUTOFF_HOUR}h. Para agendar aulas de sábado, aguarde até às 16h.'
+                elif dia_hoje == 'Sexta' and hoje.hour >= 20:
+                    msg = 'O horário para agendamento de sábado encerrou (disponível sexta das 16h às 20h).'
+                elif dia_hoje in ['Segunda','Terça','Quarta','Quinta'] and hoje.hour >= CUTOFF_HOUR:
+                    msg = f'O horário para agendamento de hoje encerrou às {CUTOFF_HOUR}h.'
+                elif dia_hoje == 'Sábado' and hoje.hour >= CUTOFF_HOUR:
+                    msg = f'O horário para agendamento de hoje encerrou às {CUTOFF_HOUR}h.'
+                else:
+                    msg = 'Hoje não há disponibilidade para agendamento.'
+                flash(msg, 'warning')
                 return render_template('horarios_aluno.html',
                                        aluno=aluno,
                                        horarios=[],
@@ -268,16 +289,42 @@ def cadastrar_horario():
             3: 'Quinta', 4: 'Sexta', 5: 'Sábado', 6: 'Domingo'
         }
         dia_hoje = weekday_map[hoje.weekday()]
+        dia_disponivel = None
 
-        if dia_hoje in ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta']:
-            dia_disponivel = dia_hoje
-        elif dia_hoje == 'Sexta' and 16 <= hoje.hour < 20:
-            dia_disponivel = 'Sábado'
-        else:
+        # Domingo ou feriado: sem agendamento
+        if dia_hoje == 'Domingo' or is_holiday(hoje.date()):
             dia_disponivel = None
+        # Segunda a Quinta: pode agendar no mesmo dia até 14h
+        elif dia_hoje in ['Segunda','Terça','Quarta','Quinta']:
+            if hoje.hour < CUTOFF_HOUR:
+                dia_disponivel = dia_hoje
+        # Sexta: pode agendar no mesmo dia até 14h OU agendar sábado entre 16h-20h
+        elif dia_hoje == 'Sexta':
+            if hoje.hour < CUTOFF_HOUR:
+                dia_disponivel = 'Sexta'
+            elif 16 <= hoje.hour < 20:
+                dia_disponivel = 'Sábado'
+        # Sábado: pode agendar no mesmo dia até 14h
+        elif dia_hoje == 'Sábado':
+            if hoje.hour < CUTOFF_HOUR:
+                dia_disponivel = 'Sábado'
 
         if not dia_disponivel:
-            flash('Hoje não há disponibilidade para agendamento (domingo, feriado ou fora do horário permitido).', 'warning')
+            if dia_hoje == 'Domingo':
+                msg = 'Agendamentos não são permitidos aos domingos.'
+            elif is_holiday(hoje.date()):
+                msg = 'Hoje é feriado. Agendamentos não são permitidos em feriados.'
+            elif dia_hoje == 'Sexta' and hoje.hour >= CUTOFF_HOUR and hoje.hour < 16:
+                msg = f'Para agendar aulas de sexta, faça o agendamento até as {CUTOFF_HOUR}h. Para agendar aulas de sábado, aguarde até às 16h.'
+            elif dia_hoje == 'Sexta' and hoje.hour >= 20:
+                msg = 'O horário para agendamento de sábado encerrou (disponível sexta das 16h às 20h).'
+            elif dia_hoje in ['Segunda','Terça','Quarta','Quinta'] and hoje.hour >= CUTOFF_HOUR:
+                msg = f'O horário para agendamento de hoje encerrou às {CUTOFF_HOUR}h.'
+            elif dia_hoje == 'Sábado' and hoje.hour >= CUTOFF_HOUR:
+                msg = f'O horário para agendamento de hoje encerrou às {CUTOFF_HOUR}h.'
+            else:
+                msg = 'Hoje não há disponibilidade para agendamento.'
+            flash(msg, 'warning')
             return redirect(url_for('acessar_aluno', aluno_id=aluno.id))
 
         horarios = Horario.query.filter_by(faixa=aluno.faixa, dia_semana=dia_disponivel).all()
