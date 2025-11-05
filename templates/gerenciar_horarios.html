@@ -1,6 +1,5 @@
-{% extends "base.html" %}
-{% block title %}Gerenciar Horários{% endblock %}
-{% block content %}
+{% extends "base.html" %} {% block title %}Gerenciar Horários{% endblock %} {%
+block content %}
 
 <div class="row justify-content-center">
   <div class="col-md-10">
@@ -10,34 +9,42 @@
       <h4 class="mb-3">Horários cadastrados</h4>
 
       {% if horarios %}
-        <table class="table table-bordered align-middle">
-          <thead class="table-light">
-            <tr>
-              <th>Dia da Semana</th>
-              <th>Hora</th>
-              <th>Faixa</th>
-              <th style="width:150px;">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for h in horarios %}
-              <tr>
-                <td>{{ h.dia_semana }}</td>
-                <td>{{ h.hora }}</td>
-                <td>{{ h.faixa }}</td>
-                <td>
-                  <a href="{{ url_for('editar_horario', horario_id=h.id) }}" class="btn btn-sm btn-primary">Editar</a>
-                  <a href="{{ url_for('excluir_horario', horario_id=h.id) }}" class="btn btn-sm btn-danger">Excluir</a>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <table class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Dia da Semana</th>
+            <th>Hora</th>
+            <th>Faixa</th>
+            <th style="width: 150px">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for h in horarios %}
+          <tr>
+            <td>{{ h.dia_semana }}</td>
+            <td>{{ h.hora }}</td>
+            <td>{{ h.faixa }}</td>
+            <td>
+              <a
+                href="{{ url_for('editar_horario', horario_id=h.id) }}"
+                class="btn btn-sm btn-primary"
+                >Editar</a
+              >
+              <a
+                href="{{ url_for('excluir_horario', horario_id=h.id) }}"
+                class="btn btn-sm btn-danger"
+                >Excluir</a
+              >
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
       {% else %}
-        <div class="alert alert-info">Nenhum horário cadastrado.</div>
+      <div class="alert alert-info">Nenhum horário cadastrado.</div>
       {% endif %}
 
-      <hr>
+      <hr />
       <h5 class="mb-3">Adicionar novo horário</h5>
 
       <form method="POST" action="{{ url_for('gerenciar_horarios') }}">
@@ -56,18 +63,37 @@
           </div>
           <div class="col-md-4">
             <label class="form-label">Hora</label>
-            <input type="time" name="hora" class="form-control" required>
+            <input type="time" name="hora" class="form-control" required />
           </div>
           <div class="col-md-4">
             <label class="form-label">Faixa</label>
-            <input type="text" name="faixa" class="form-control" placeholder="Ex: Branca, Azul..." required>
+            <select name="faixa" class="form-select" required>
+              <option value="">Selecione...</option>
+              <option value="Branca">Branca</option>
+              <option value="Amarela">Amarela</option>
+              <option value="Laranja">Laranja</option>
+              <option value="Jade">Jade</option>
+              <option value="Verde">Verde</option>
+              <option value="Roxa">Roxa</option>
+              <option value="Vermelha">Vermelha</option>
+              <option value="Marrom Claro">Marrom Claro</option>
+              <option value="Marrom Escuro">Marrom Escuro</option>
+              <option value="Preta">Preta</option>
+              <option value="Preta 1 Grau">Preta 1 Grau</option>
+              <option value="Preta 2 Grau">Preta 2 Grau</option>
+              <option value="Preta 3 Grau">Preta 3 Grau</option>
+              <option value="Preta 4 Grau">Preta 4 Grau</option>
+              <option value="Preta 5 Grau">Preta 5 Grau</option>
+            </select>
           </div>
         </div>
         <button type="submit" class="btn btn-success mt-3">Adicionar</button>
       </form>
 
       <div class="mt-4">
-        <a href="{{ url_for('admin_painel') }}" class="btn btn-secondary">Voltar ao Painel</a>
+        <a href="{{ url_for('admin_painel') }}" class="btn btn-secondary"
+          >Voltar ao Painel</a
+        >
       </div>
     </div>
   </div>

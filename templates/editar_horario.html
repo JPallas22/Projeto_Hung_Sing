@@ -24,7 +24,24 @@
 
         <div class="mb-3">
           <label class="form-label">Faixa</label>
-          <input type="text" name="faixa" class="form-control" value="{{ horario.faixa }}" required>
+          <select name="faixa" class="form-select" required>
+            <option value="">Selecione...</option>
+            <option value="Branca" {% if horario.faixa == 'Branca' %}selected{% endif %}>Branca</option>
+            <option value="Amarela" {% if horario.faixa == 'Amarela' %}selected{% endif %}>Amarela</option>
+            <option value="Laranja" {% if horario.faixa == 'Laranja' %}selected{% endif %}>Laranja</option>
+            <option value="Jade" {% if horario.faixa == 'Jade' %}selected{% endif %}>Jade</option>
+            <option value="Verde" {% if horario.faixa == 'Verde' %}selected{% endif %}>Verde</option>
+            <option value="Roxa" {% if horario.faixa == 'Roxa' %}selected{% endif %}>Roxa</option>
+            <option value="Vermelha" {% if horario.faixa == 'Vermelha' %}selected{% endif %}>Vermelha</option>
+            <option value="Marrom Claro" {% if horario.faixa == 'Marrom Claro' %}selected{% endif %}>Marrom Claro</option>
+            <option value="Marrom Escuro" {% if horario.faixa == 'Marrom Escuro' %}selected{% endif %}>Marrom Escuro</option>
+            <option value="Preta" {% if horario.faixa == 'Preta' %}selected{% endif %}>Preta</option>
+            <option value="Preta 1 Grau" {% if horario.faixa == 'Preta 1 Grau' %}selected{% endif %}>Preta 1 Grau</option>
+            <option value="Preta 2 Grau" {% if horario.faixa == 'Preta 2 Grau' %}selected{% endif %}>Preta 2 Grau</option>
+            <option value="Preta 3 Grau" {% if horario.faixa == 'Preta 3 Grau' %}selected{% endif %}>Preta 3 Grau</option>
+            <option value="Preta 4 Grau" {% if horario.faixa == 'Preta 4 Grau' %}selected{% endif %}>Preta 4 Grau</option>
+            <option value="Preta 5 Grau" {% if horario.faixa == 'Preta 5 Grau' %}selected{% endif %}>Preta 5 Grau</option>
+          </select>
         </div>
 
         <button type="submit" class="btn btn-success">Salvar alterações</button>
