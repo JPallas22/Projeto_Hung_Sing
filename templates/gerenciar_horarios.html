@@ -1,47 +1,126 @@
 {% extends "base.html" %} {% block title %}Gerenciar Horários{% endblock %} {%
 block content %}
 
+<style>
+  .day-card {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+  .day-header {
+    background: #007bff;
+    color: white;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  .horario-item {
+    padding: 12px 20px;
+    border-bottom: 1px solid #f1f1f1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .horario-item:last-child {
+    border-bottom: none;
+  }
+  .horario-item:hover {
+    background-color: #f8f9fa;
+  }
+  .horario-info {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex: 1;
+  }
+  .hora-badge {
+    background: #e9ecef;
+    color: #495057;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    min-width: 60px;
+    text-align: center;
+  }
+  .faixa-badge {
+    background: #f8f9fa;
+    color: #495057;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    border: 1px solid #dee2e6;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 30px;
+    color: #6c757d;
+  }
+</style>
+
 <div class="row justify-content-center">
-  <div class="col-md-10">
+  <div class="col-md-11">
     <div class="logo-title">Gerenciar Horários de Aula</div>
 
-    <div class="card p-4">
-      <h4 class="mb-3">Horários cadastrados</h4>
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %} {% for category, message in messages %}
+    <div
+      class="alert alert-{{ category }} alert-dismissible fade show"
+      role="alert"
+    >
+      {{ message }}
+      <button
+        type="button"
+        class="btn-close"
+        data-bs-dismiss="alert"
+        aria-label="Fechar"
+      ></button>
+    </div>
+    {% endfor %} {% endif %} {% endwith %}
 
-      {% if horarios %}
-      <table class="table table-bordered align-middle">
-        <thead class="table-light">
-          <tr>
-            <th>Dia da Semana</th>
-            <th>Hora</th>
-            <th>Faixa</th>
-            <th style="width: 150px">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for h in horarios %}
-          <tr>
-            <td>{{ h.dia_semana }}</td>
-            <td>{{ h.hora }}</td>
-            <td>{{ h.faixa }}</td>
-            <td>
-              <a
-                href="{{ url_for('editar_horario', horario_id=h.id) }}"
-                class="btn btn-sm btn-primary"
-                >Editar</a
-              >
-              <a
-                href="{{ url_for('excluir_horario', horario_id=h.id) }}"
-                class="btn btn-sm btn-danger"
-                >Excluir</a
-              >
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      {% else %}
-      <div class="alert alert-info">Nenhum horário cadastrado.</div>
+    <div class="card p-4">
+      <h4 class="mb-4">Horários Cadastrados por Dia da Semana</h4>
+
+      {% if horarios_por_dia %} {% for dia in ordem_dias %} {% if dia in
+      horarios_por_dia %}
+      <div class="day-card">
+        <div class="day-header">
+          {% if dia == 'Sábado' or dia == 'Domingo' %} {{ dia }} {% else %} {{
+          dia }}-feira {% endif %}
+          <span class="badge bg-light text-dark ms-2"
+            >{{ horarios_por_dia[dia]|length }} horário(s)</span
+          >
+        </div>
+        {% for h in horarios_por_dia[dia] %}
+        <div class="horario-item">
+          <div class="horario-info">
+            <span class="hora-badge">{{ h.hora }}</span>
+            <span class="faixa-badge">{{ h.faixa }}</span>
+          </div>
+          <div class="btn-group" role="group">
+            <a
+              href="{{ url_for('editar_horario', horario_id=h.id) }}"
+              class="btn btn-sm btn-primary"
+            >
+              Editar
+            </a>
+            <a
+              href="{{ url_for('excluir_horario', horario_id=h.id) }}"
+              class="btn btn-sm btn-danger"
+              onclick="return confirm('Tem certeza que deseja excluir este horário?')"
+            >
+              Excluir
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %} {% endfor %} {% else %}
+      <div class="empty-state">
+        <p>Nenhum horário cadastrado.</p>
+      </div>
       {% endif %}
 
       <hr />
@@ -59,6 +138,7 @@ block content %}
               <option>Quinta</option>
               <option>Sexta</option>
               <option>Sábado</option>
+              <option>Domingo</option>
             </select>
           </div>
           <div class="col-md-4">

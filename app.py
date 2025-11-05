@@ -544,8 +544,22 @@ def gerenciar_horarios():
         flash(f'Horário adicionado: {dia_semana} - {hora} ({faixa})', 'success')
         return redirect(url_for('gerenciar_horarios'))
 
-    horarios = Horario.query.order_by(Horario.dia_semana, Horario.hora).all()
-    return render_template('gerenciar_horarios.html', horarios=horarios)
+    # Ordem correta dos dias da semana
+    ordem_dias = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
+    
+    # Buscar todos os horários
+    todos_horarios = Horario.query.all()
+    
+    # Organizar por dia da semana
+    horarios_por_dia = {}
+    for dia in ordem_dias:
+        horarios_dia = [h for h in todos_horarios if h.dia_semana == dia]
+        # Ordenar por hora
+        horarios_dia.sort(key=lambda x: x.hora)
+        if horarios_dia:  # Só adiciona se tiver horários
+            horarios_por_dia[dia] = horarios_dia
+    
+    return render_template('gerenciar_horarios.html', horarios_por_dia=horarios_por_dia, ordem_dias=ordem_dias)
 
 @app.route('/excluir_horario/<int:horario_id>')
 @login_required
