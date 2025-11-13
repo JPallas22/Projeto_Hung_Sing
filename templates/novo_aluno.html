@@ -2,8 +2,9 @@
 {% block title %}Cadastrar Novo Aluno{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-12">
-        <div class="logo-title">Cadastro Completo de Aluno</div>
+    <div class="col-md-10">
+        <div class="logo-title">Cadastro de Novo Aluno</div>
+
         {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -14,90 +15,47 @@
             {% endfor %}
         {% endif %}
         {% endwith %}
+
         <div class="card p-4">
             <form method="post" action="{{ url_for('novo_aluno') }}">
                 <div class="row g-3">
+
                     <div class="col-md-3">
                         <label class="form-label">Número do Aluno*</label>
                         <input type="text" class="form-control" name="numero_aluno" required>
                     </div>
-                    <div class="col-md-3">
+
+                    <div class="col-md-5">
                         <label class="form-label">Nome*</label>
                         <input type="text" class="form-control" name="nome" required>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Idade*</label>
-                        <input type="number" class="form-control" name="idade" required>
-                    </div>
+
                     <div class="col-md-4">
-                        <label class="form-label">Endereço*</label>
-                        <input type="text" class="form-control" name="endereco" required>
+                        <label class="form-label">Código de Acesso*</label>
+                        <input type="text" class="form-control" name="codigo_acesso" required>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Bairro*</label>
-                        <input type="text" class="form-control" name="bairro" required>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Cidade*</label>
-                        <input type="text" class="form-control" name="cidade" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Estado*</label>
-                        <input type="text" class="form-control" name="estado" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">CEP*</label>
-                        <input type="text" class="form-control" name="cep" required>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Nacionalidade*</label>
-                        <input type="text" class="form-control" name="nacionalidade" required>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Data de Nascimento*</label>
-                        <input type="date" class="form-control" name="data_nascimento" required>
-                    </div>
+
                     <div class="col-md-3">
                         <label class="form-label">CPF*</label>
                         <input type="text" class="form-control" name="cpf" required>
                     </div>
+
                     <div class="col-md-3">
-                        <label class="form-label">RG*</label>
-                        <input type="text" class="form-control" name="rg" required>
+                        <label class="form-label">Data de Nascimento*</label>
+                        <input type="date" class="form-control" name="data_nascimento" required>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Estado Civil*</label>
-                        <input type="text" class="form-control" name="estado_civil" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Nome do Cônjuge</label>
-                        <input type="text" class="form-control" name="nome_conjuge">
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">Sexo*</label>
-                        <select class="form-select" name="sexo" required>
-                            <option value="">Selecione</option>
-                            <option value="M">Masculino</option>
-                            <option value="F">Feminino</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Telefone*</label>
-                        <input type="text" class="form-control" name="telefone" required>
-                    </div>
+
                     <div class="col-md-4">
                         <label class="form-label">Email*</label>
                         <input type="email" class="form-control" name="email" required>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Nome do Pai*</label>
-                        <input type="text" class="form-control" name="nome_pai" required>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Nome da Mãe*</label>
-                        <input type="text" class="form-control" name="nome_mae" required>
-                    </div>
+
                     <div class="col-md-2">
+                        <label class="form-label">Celular*</label>
+                        <input type="text" class="form-control" name="telefone" required>
+                    </div>
+
+                    <div class="col-md-3">
                         <label class="form-label">Faixa*</label>
                         <select class="form-select" name="faixa" required>
                             <option value="">Selecione</option>
@@ -118,7 +76,57 @@
                             <option value="Preta 5 Grau">Preta 5 Grau</option>
                         </select>
                     </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Plano*</label>
+                        <select class="form-select" name="faixa" required>
+                            <option value="">Selecione</option>
+                            <option value="Adulto">Adulto</option>
+                            <option value="Tigre">Tigre</option>
+                            <option value="Infantil">Infantil</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Idade</label>
+                        <input type="number" class="form-control" name="idade">
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Endereço</label>
+                        <input type="text" class="form-control" name="endereco">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Cidade</label>
+                        <input type="text" class="form-control" name="cidade">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label">Estado</label>
+                        <input type="text" class="form-control" name="estado">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Nome do Pai</label>
+                        <input type="text" class="form-control" name="nome_pai">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Nome da Mãe</label>
+                        <input type="text" class="form-control" name="nome_mae">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">RG</label>
+                        <input type="text" class="form-control" name="rg">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Estado Civil</label>
+                        <input type="text" class="form-control" name="estado_civil">
+                    </div>
                 </div>
+
                 <div class="mt-4 d-flex justify-content-end gap-2">
                     <button type="submit" class="btn btn-primary">Cadastrar</button>
                     <a href="{{ url_for('admin_painel') }}" class="btn btn-secondary">Cancelar</a>

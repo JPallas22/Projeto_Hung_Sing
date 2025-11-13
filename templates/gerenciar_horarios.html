@@ -1,180 +1,150 @@
-{% extends "base.html" %} {% block title %}Gerenciar Horários{% endblock %} {%
-block content %}
-
-<style>
-  .day-card {
-    background: white;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    margin-bottom: 1rem;
-    overflow: hidden;
-  }
-  .day-header {
-    background: #007bff;
-    color: white;
-    padding: 10px 20px;
-    font-weight: 600;
-    font-size: 1rem;
-  }
-  .horario-item {
-    padding: 12px 20px;
-    border-bottom: 1px solid #f1f1f1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .horario-item:last-child {
-    border-bottom: none;
-  }
-  .horario-item:hover {
-    background-color: #f8f9fa;
-  }
-  .horario-info {
-    display: flex;
-    gap: 15px;
-    align-items: center;
-    flex: 1;
-  }
-  .hora-badge {
-    background: #e9ecef;
-    color: #495057;
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    min-width: 60px;
-    text-align: center;
-  }
-  .faixa-badge {
-    background: #f8f9fa;
-    color: #495057;
-    padding: 4px 10px;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    border: 1px solid #dee2e6;
-  }
-  .empty-state {
-    text-align: center;
-    padding: 30px;
-    color: #6c757d;
-  }
-</style>
+{% extends 'base.html' %}
+{% block title %}Gerenciar Horários{% endblock %}
+{% block content %}
 
 <div class="row justify-content-center">
-  <div class="col-md-11">
-    <div class="logo-title">Gerenciar Horários de Aula</div>
+  <div class="col-md-10">
+    <div class="logo-title">Gerenciar Horários</div>
 
-    {% with messages = get_flashed_messages(with_categories=true) %} {% if
-    messages %} {% for category, message in messages %}
-    <div
-      class="alert alert-{{ category }} alert-dismissible fade show"
-      role="alert"
-    >
-      {{ message }}
-      <button
-        type="button"
-        class="btn-close"
-        data-bs-dismiss="alert"
-        aria-label="Fechar"
-      ></button>
-    </div>
-    {% endfor %} {% endif %} {% endwith %}
-
-    <div class="card p-4">
-      <h4 class="mb-4">Horários Cadastrados por Dia da Semana</h4>
-
-      {% if horarios_por_dia %} {% for dia in ordem_dias %} {% if dia in
-      horarios_por_dia %}
-      <div class="day-card">
-        <div class="day-header">
-          {% if dia == 'Sábado' or dia == 'Domingo' %} {{ dia }} {% else %} {{
-          dia }}-feira {% endif %}
-          <span class="badge bg-light text-dark ms-2"
-            >{{ horarios_por_dia[dia]|length }} horário(s)</span
-          >
-        </div>
-        {% for h in horarios_por_dia[dia] %}
-        <div class="horario-item">
-          <div class="horario-info">
-            <span class="hora-badge">{{ h.hora }}</span>
-            <span class="faixa-badge">{{ h.faixa }}</span>
-          </div>
-          <div class="btn-group" role="group">
-            <a
-              href="{{ url_for('editar_horario', horario_id=h.id) }}"
-              class="btn btn-sm btn-primary"
-            >
-              Editar
-            </a>
-            <a
-              href="{{ url_for('excluir_horario', horario_id=h.id) }}"
-              class="btn btn-sm btn-danger"
-              onclick="return confirm('Tem certeza que deseja excluir este horário?')"
-            >
-              Excluir
-            </a>
-          </div>
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %} {% endfor %} {% else %}
-      <div class="empty-state">
-        <p>Nenhum horário cadastrado.</p>
-      </div>
-      {% endif %}
-
-      <hr />
-      <h5 class="mb-3">Adicionar novo horário</h5>
-
-      <form method="POST" action="{{ url_for('gerenciar_horarios') }}">
+    <!-- Formulário: define dia/hora e range de faixas -->
+    <div class="card p-4 mb-4">
+      <form method="post" action="{{ url_for('gerenciar_horarios') }}">
         <div class="row g-3">
+
           <div class="col-md-4">
-            <label class="form-label">Dia da Semana</label>
+            <label class="form-label">Dia da semana</label>
             <select name="dia_semana" class="form-select" required>
               <option value="">Selecione...</option>
-              <option>Segunda</option>
-              <option>Terça</option>
-              <option>Quarta</option>
-              <option>Quinta</option>
-              <option>Sexta</option>
-              <option>Sábado</option>
-              <option>Domingo</option>
+              <option value="Segunda">Segunda</option>
+              <option value="Terça">Terça</option>
+              <option value="Quarta">Quarta</option>
+              <option value="Quinta">Quinta</option>
+              <option value="Sexta">Sexta</option>
+              <option value="Sábado">Sábado</option>
             </select>
           </div>
-          <div class="col-md-4">
-            <label class="form-label">Hora</label>
-            <input type="time" name="hora" class="form-control" required />
-          </div>
-          <div class="col-md-4">
-            <label class="form-label">Faixa</label>
-            <select name="faixa" class="form-select" required>
-              <option value="">Selecione...</option>
-              <option value="Branca">Branca</option>
-              <option value="Amarela">Amarela</option>
-              <option value="Laranja">Laranja</option>
-              <option value="Jade">Jade</option>
-              <option value="Verde">Verde</option>
-              <option value="Roxa">Roxa</option>
-              <option value="Vermelha">Vermelha</option>
-              <option value="Marrom Claro">Marrom Claro</option>
-              <option value="Marrom Escuro">Marrom Escuro</option>
-              <option value="Preta">Preta</option>
-              <option value="Preta 1 Grau">Preta 1 Grau</option>
-              <option value="Preta 2 Grau">Preta 2 Grau</option>
-              <option value="Preta 3 Grau">Preta 3 Grau</option>
-              <option value="Preta 4 Grau">Preta 4 Grau</option>
-              <option value="Preta 5 Grau">Preta 5 Grau</option>
-            </select>
-          </div>
-        </div>
-        <button type="submit" class="btn btn-success mt-3">Adicionar</button>
-      </form>
 
-      <div class="mt-4">
-        <a href="{{ url_for('admin_painel') }}" class="btn btn-secondary"
-          >Voltar ao Painel</a
-        >
-      </div>
+          <div class="col-md-2">
+            <label class="form-label">Hora</label>
+            <input type="time" name="hora" class="form-control" required>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Faixa inicial</label>
+            <select name="faixa_inicio" class="form-select">
+              <option value="">Selecione...</option>
+              {% for f in FAIXAS_ORDER %}
+              <option value="{{ f }}">{{ f }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-3">
+            <label class="form-label">Faixa final</label>
+            <select name="faixa_fim" class="form-select">
+              <option value="">Selecione...</option>
+              {% for f in FAIXAS_ORDER %}
+              <option value="{{ f }}">{{ f }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label">Plano (opcional)</label>
+            <select name="plano" class="form-select">
+              <option value="">Nenhum plano (usar faixas)</option>
+              <option value="Infantil">Infantil (todas as faixas)</option>
+              <option value="Tigre">Tigre (todas as faixas)</option>
+            </select>
+            <small class="text-muted">
+              Se escolher um plano, todas as faixas serão usadas e o range será ignorado.
+            </small>
+          </div>
+
+        </div>
+
+        <div class="mt-3 text-end">
+          <button type="submit" class="btn btn-primary">Aplicar configuração</button>
+        </div>
+      </form>
+    </div>
+
+
+    <div class="card p-4">
+  <h5 class="mb-3">Horários cadastrados</h5>
+
+  <form method="get" class="row g-3 mb-3">
+    <div class="col-md-3">
+      <label class="form-label">Dia</label>
+      <select name="filtro_dia" class="form-select">
+        <option value="">Todos</option>
+        {% for d in dias_disponiveis %}
+        <option value="{{ d }}" {% if filtro_dia == d %}selected{% endif %}>{{ d }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Horário</label>
+      <select name="filtro_hora" class="form-select">
+        <option value="">Todos</option>
+        {% for h in horas_disponiveis %}
+        <option value="{{ h }}" {% if filtro_hora == h %}selected{% endif %}>{{ h }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Faixa</label>
+      <select name="filtro_faixa" class="form-select">
+        <option value="">Todas</option>
+        {% for f in faixas_disponiveis %}
+        <option value="{{ f }}" {% if filtro_faixa == f %}selected{% endif %}>{{ f }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">Plano</label>
+      <select name="filtro_plano" class="form-select">
+        <option value="">Todos</option>
+        <option value="Infantil" {% if filtro_plano == 'Infantil' %}selected{% endif %}>Infantil</option>
+        <option value="Tigre" {% if filtro_plano == 'Tigre' %}selected{% endif %}>Tigre</option>
+      </select>
+    </div>
+
+    <div class="col-12 text-end">
+      <button type="submit" class="btn btn-primary">Filtrar</button>
+      <a href="{{ url_for('gerenciar_horarios') }}" class="btn btn-secondary">Limpar</a>
+    </div>
+  </form>
+
+  {% if horarios %}
+  <table class="table table-striped align-middle">
+    <thead>
+      <tr>
+        <th>Dia</th>
+        <th>Hora</th>
+        <th>Faixa</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for h in horarios %}
+      <tr>
+        <td>{{ h.dia_semana }}</td>
+        <td>{{ h.hora }}</td>
+        <td>{{ h.faixa }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="alert alert-info">Nenhum horário encontrado com os filtros selecionados.</div>
+  {% endif %}
+</div>
+
+    <div class="mt-3">
+      <a href="{{ url_for('admin_painel') }}" class="btn btn-secondary">Voltar</a>
     </div>
   </div>
 </div>

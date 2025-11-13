@@ -1,0 +1,26 @@
+[
+  {
+    "title": "Lembrete Importante",
+    "body": "Agendamentos para hoje vão até 14h.",
+    "variant": "dark",
+    "accent": "warning",
+    "icon": "⏰",
+    "interval": 6000
+  },
+  {
+    "title": "Evento",
+    "body": "Sexta 19h: seminário de defesa pessoal.",
+    "variant": "dark",
+    "accent": "primary",
+    "icon": "📅",
+    "interval": 6000
+  },
+  {
+    "title": "Motivação",
+    "body": "Disciplina transforma rotina em resultado.",
+    "variant": "dark",
+    "accent": "success",
+    "icon": "💪",
+    "interval": 6000
+  }
+]

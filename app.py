@@ -64,6 +64,48 @@ def save_cancelamentos(data):
 
 CUTOFF_HOUR = 14
 
+AVISOS_PATH = 'config/avisos.json'
+
+def load_avisos():
+    try:
+        import json, os
+        if not os.path.exists(AVISOS_PATH):
+            return []
+        with open(AVISOS_PATH, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        # valida estrutura básica
+        avisos = []
+        for item in data:
+            avisos.append({
+                "title": item.get("title", "Aviso"),
+                "body": item.get("body", ""),
+                "variant": item.get("variant", "dark"),      # dark | light
+                "accent": item.get("accent", "warning"),     # warning | primary | success...
+                "icon": item.get("icon", "📢"),
+                "interval": int(item.get("interval", 6000)), # ms por slide
+            })
+        return avisos
+    except Exception:
+        return []
+
+FAIXAS_ORDER = [
+    "Branca",
+    "Amarela",
+    "Laranja",
+    "Jade",
+    "Verde",
+    "Roxa",
+    "Vermelha",
+    "Marrom Claro",
+    "Marrom Escuro",
+    "Preta",
+    "Preta 1 Grau",
+    "Preta 2 Grau",
+    "Preta 3 Grau",
+    "Preta 4 Grau",
+    "Preta 5 Grau",
+]
+
 class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nome = db.Column(db.String(100), nullable=False)
@@ -75,29 +117,38 @@ class Usuario(db.Model):
 class Aluno(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     numero_matricula = db.Column(db.String(10), unique=True, nullable=False)
-    numero_aluno = db.Column(db.String(10), unique=True, nullable=False)
-    nome = db.Column(db.String(100), nullable=False)
-    idade = db.Column(db.Integer, nullable=False)
-    endereco = db.Column(db.String(150), nullable=False)
-    bairro = db.Column(db.String(100), nullable=False)
-    cidade = db.Column(db.String(100), nullable=False)
-    estado = db.Column(db.String(2), nullable=False)
-    cep = db.Column(db.String(10), nullable=False)
-    nacionalidade = db.Column(db.String(50), nullable=False)
+    numero_aluno     = db.Column(db.String(10), unique=True, nullable=False)
+    nome             = db.Column(db.String(100), nullable=False)
+    idade        = db.Column(db.Integer, nullable=True)
+    endereco     = db.Column(db.String(150), nullable=True)
+    bairro       = db.Column(db.String(100), nullable=True)
+    cidade       = db.Column(db.String(100), nullable=True)
+    estado       = db.Column(db.String(2),   nullable=True)
+    cep          = db.Column(db.String(10),  nullable=True)
+    nacionalidade = db.Column(db.String(50), nullable=True)
     data_nascimento = db.Column(db.String(10), nullable=False)
-    cpf = db.Column(db.String(14), nullable=False)
-    rg = db.Column(db.String(20), nullable=False)
-    estado_civil = db.Column(db.String(20), nullable=False)
+    cpf             = db.Column(db.String(14), nullable=False)
+    rg           = db.Column(db.String(20),  nullable=True)
+    estado_civil = db.Column(db.String(20),  nullable=True)
     nome_conjuge = db.Column(db.String(100), nullable=True)
-    sexo = db.Column(db.String(1), nullable=False)
-    telefone = db.Column(db.String(20), nullable=False)
-    email = db.Column(db.String(120), nullable=False)
-    nome_pai = db.Column(db.String(100), nullable=False)
-    nome_mae = db.Column(db.String(100), nullable=False)
+    sexo         = db.Column(db.String(1),   nullable=True)
+    telefone = db.Column(db.String(20),  nullable=False)
+    email    = db.Column(db.String(120), nullable=False)
+    nome_pai = db.Column(db.String(100), nullable=True)
+    nome_mae = db.Column(db.String(100), nullable=True)
     faixa = db.Column(db.String(20), nullable=False)
+    codigo_acesso_hash = db.Column(db.String(128), nullable=False)
 
     def __repr__(self):
         return f'<Aluno {self.nome}>'
+
+    def set_codigo_acesso(self, codigo: str):
+        self.codigo_acesso_hash = generate_password_hash(codigo)
+
+    def verificar_codigo_acesso(self, codigo: str) -> bool:
+        if not self.codigo_acesso_hash:
+            return False
+        return check_password_hash(self.codigo_acesso_hash, codigo)
 
 class Admin(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
@@ -148,13 +199,14 @@ def acessar_aluno():
         matricula = request.form['matricula']
         senha = request.form['senha']
         aluno = Aluno.query.filter_by(numero_matricula=matricula).first()
-        if aluno and aluno.cpf.replace('.', '').replace('-', '')[:4] == senha:
+        if aluno and aluno.verificar_codigo_acesso(senha):
             return render_template('acessar_aluno.html', aluno=aluno,
                                    CUTOFF_HOUR=CUTOFF_HOUR, NOW_HOUR=datetime.now().hour)
-        flash('Matrícula ou senha inválidos!', 'danger')
+        flash('Matrícula ou código de acesso inválidos!', 'danger')
 
     return render_template('acessar_aluno.html', aluno=aluno,
                            CUTOFF_HOUR=CUTOFF_HOUR, NOW_HOUR=datetime.now().hour)
+
 
 @app.route('/login_admin', methods=['GET', 'POST'])
 def login_admin():
@@ -179,9 +231,9 @@ def login_aluno():
 
         aluno = Aluno.query.filter_by(numero_matricula=matricula).first()
 
-        if aluno and aluno.cpf.replace('.', '').replace('-', '')[:4] == senha:
+        if aluno and aluno.verificar_codigo_acesso(senha):
             faixa = aluno.faixa
-
+            horarios = Horario.query.filter_by(faixa=faixa).all()
             hoje = datetime.now()
             weekday_map = {
                 0: 'Segunda', 1: 'Terça', 2: 'Quarta',
@@ -474,9 +526,9 @@ def novo_aluno():
     if request.method == 'POST':
         numero_aluno = request.form['numero_aluno']
 
-        aluno_existente = Aluno.query.filter_by(numero_aluno=numero_aluno).first()
-        if aluno_existente:
-            flash(f'Número do aluno "{numero_aluno}" já está cadastrado!', 'danger')
+        codigo_acesso = request.form.get('codigo_acesso', '').strip()
+        if not codigo_acesso:
+            flash('Informe o código de acesso do aluno.', 'warning')
             return render_template('novo_aluno.html')
 
         ultimo_aluno = Aluno.query.order_by(Aluno.id.desc()).first()
@@ -489,25 +541,36 @@ def novo_aluno():
             numero_matricula=nova_matricula,
             numero_aluno=numero_aluno,
             nome=request.form['nome'],
-            idade=request.form['idade'],
-            endereco=request.form['endereco'],
-            bairro=request.form['bairro'],
-            cidade=request.form['cidade'],
-            estado=request.form['estado'],
-            cep=request.form['cep'],
-            nacionalidade=request.form['nacionalidade'],
+
+            idade=int(request.form['idade']) if request.form.get('idade') else None,
+            endereco=request.form.get('endereco') or None,
+            bairro=request.form.get('bairro') or None,
+            cidade=request.form.get('cidade') or None,
+            estado=request.form.get('estado') or None,
+            cep=request.form.get('cep') or None,
+            nacionalidade=request.form.get('nacionalidade') or None,
+
             data_nascimento=request.form['data_nascimento'],
             cpf=request.form['cpf'],
-            rg=request.form['rg'],
-            estado_civil=request.form['estado_civil'],
-            nome_conjuge=request.form.get('nome_conjuge', ''),
-            sexo=request.form['sexo'],
+            rg=request.form.get('rg') or None,
+            estado_civil=request.form.get('estado_civil') or None,
+            nome_conjuge=request.form.get('nome_conjuge') or None,
+            sexo=request.form.get('sexo') or None,
+
             telefone=request.form['telefone'],
             email=request.form['email'],
-            nome_pai=request.form['nome_pai'],
-            nome_mae=request.form['nome_mae'],
+
+            nome_pai=request.form.get('nome_pai') or None,
+            nome_mae=request.form.get('nome_mae') or None,
             faixa=request.form['faixa']
         )
+
+        codigo_acesso = request.form.get('codigo_acesso', '').strip()
+        if not codigo_acesso:
+            flash('Informe o código de acesso do aluno.', 'warning')
+            return render_template('novo_aluno.html')
+
+        aluno.set_codigo_acesso(codigo_acesso)
 
         db.session.add(aluno)
         db.session.commit()
@@ -533,33 +596,93 @@ def listar_horarios():
 @login_required
 def gerenciar_horarios():
     if request.method == 'POST':
-        dia_semana = request.form['dia_semana']
-        hora = request.form['hora']
-        faixa = request.form['faixa']
+        dia_semana = request.form.get('dia_semana')
+        hora = request.form.get('hora')
+        faixa_inicio = request.form.get('faixa_inicio')
+        faixa_fim = request.form.get('faixa_fim')
+        plano = request.form.get('plano')
 
-        novo_horario = Horario(dia_semana=dia_semana, hora=hora, faixa=faixa)
-        db.session.add(novo_horario)
+        if not dia_semana or not hora:
+            flash('Preencha dia e hora.', 'warning')
+            return redirect(url_for('gerenciar_horarios'))
+
+        if plano in ('Infantil', 'Tigre'):
+            faixas_range = FAIXAS_ORDER[:]
+        else:
+            if not faixa_inicio or not faixa_fim:
+                flash('Informe faixa inicial e faixa final ou selecione um plano.', 'warning')
+                return redirect(url_for('gerenciar_horarios'))
+
+            if faixa_inicio not in FAIXAS_ORDER or faixa_fim not in FAIXAS_ORDER:
+                flash('Faixa inicial ou final inválida.', 'danger')
+                return redirect(url_for('gerenciar_horarios'))
+
+            i_start = FAIXAS_ORDER.index(faixa_inicio)
+            i_end = FAIXAS_ORDER.index(faixa_fim)
+            if i_start > i_end:
+                i_start, i_end = i_end, i_start
+
+            faixas_range = FAIXAS_ORDER[i_start:i_end + 1]
+
+        Horario.query.filter(
+            Horario.dia_semana == dia_semana,
+            Horario.hora == hora,
+            ~Horario.faixa.in_(faixas_range)
+        ).delete(synchronize_session=False)
+
+        for faixa in faixas_range:
+            existe = Horario.query.filter_by(
+                dia_semana=dia_semana,
+                hora=hora,
+                faixa=faixa
+            ).first()
+            if not existe:
+                db.session.add(Horario(dia_semana=dia_semana, hora=hora, faixa=faixa))
+
         db.session.commit()
-
-        flash(f'Horário adicionado: {dia_semana} - {hora} ({faixa})', 'success')
+        flash('Horários atualizados para este dia e horário.', 'success')
         return redirect(url_for('gerenciar_horarios'))
 
-    # Ordem correta dos dias da semana
-    ordem_dias = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo']
-    
-    # Buscar todos os horários
-    todos_horarios = Horario.query.all()
-    
-    # Organizar por dia da semana
-    horarios_por_dia = {}
-    for dia in ordem_dias:
-        horarios_dia = [h for h in todos_horarios if h.dia_semana == dia]
-        # Ordenar por hora
-        horarios_dia.sort(key=lambda x: x.hora)
-        if horarios_dia:  # Só adiciona se tiver horários
-            horarios_por_dia[dia] = horarios_dia
-    
-    return render_template('gerenciar_horarios.html', horarios_por_dia=horarios_por_dia, ordem_dias=ordem_dias)
+    filtro_dia = request.args.get('filtro_dia')
+    filtro_hora = request.args.get('filtro_hora')
+    filtro_faixa = request.args.get('filtro_faixa')
+    filtro_plano = request.args.get('filtro_plano')
+
+    query = Horario.query
+
+    if filtro_dia:
+        query = query.filter(Horario.dia_semana == filtro_dia)
+    if filtro_hora:
+        query = query.filter(Horario.hora == filtro_hora)
+    if filtro_faixa:
+        query = query.filter(Horario.faixa == filtro_faixa)
+
+    horarios = query.order_by(Horario.dia_semana, Horario.hora, Horario.faixa).all()
+
+    todos = Horario.query.all()
+    dias_disponiveis = sorted(
+        {h.dia_semana for h in todos},
+        key=lambda d: ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'].index(d)
+        if d in ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'] else 99
+    )
+    horas_disponiveis = sorted({h.hora for h in todos})
+    faixas_disponiveis = sorted(
+        {h.faixa for h in todos},
+        key=lambda f: FAIXAS_ORDER.index(f) if f in FAIXAS_ORDER else 999
+    )
+
+    return render_template(
+        'gerenciar_horarios.html',
+        horarios=horarios,
+        FAIXAS_ORDER=FAIXAS_ORDER,
+        dias_disponiveis=dias_disponiveis,
+        horas_disponiveis=horas_disponiveis,
+        faixas_disponiveis=faixas_disponiveis,
+        filtro_dia=filtro_dia,
+        filtro_hora=filtro_hora,
+        filtro_faixa=filtro_faixa,
+        filtro_plano=filtro_plano
+    )
 
 @app.route('/excluir_horario/<int:horario_id>')
 @login_required
@@ -646,8 +769,9 @@ def editar_aluno(aluno_id):
         aluno.email = request.form['email']
         senha = request.form['senha']
 
-        if senha:
-            aluno.set_senha(senha)
+        novo_codigo = request.form.get('codigo_acesso', '').strip()
+        if novo_codigo:
+            aluno.set_codigo_acesso(novo_codigo)
 
         db.session.commit()
         return redirect(url_for('listar_alunos'))
@@ -777,4 +901,5 @@ def logout():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+    
     app.run(debug=True)

@@ -47,7 +47,6 @@
 
       <div class="mt-4 d-flex justify-content-between">
         <a href="{{ url_for('acessar_aluno', aluno_id=aluno.id) }}" class="btn btn-secondary">Voltar</a>
-        <a href="{{ url_for('cadastrar_horario', aluno_id=aluno.id) }}" class="btn btn-success">Agendar novo horário</a>
       </div>
     </div>
   </div>
@@ -59,7 +58,7 @@
   const serverHour = {{ NOW_HOUR if NOW_HOUR is defined else 0 }};
   const now = new Date();
   const browserHour = now.getHours();
-  const hour = serverHour || browserHour; // prioriza servidor, fallback navegador
+  const hour = serverHour || browserHour;
 
   const weekdayNames = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
   const todayName = weekdayNames[now.getDay()];

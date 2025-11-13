@@ -4,7 +4,40 @@
 
 <div class="row justify-content-center">
   <div class="col-md-6">
-    <div class="logo-title">Acessar Aluno</div>
+    <div class="logo-title">Bem-vindo à Hung Sing </div>
+
+    {% if avisos and avisos|length > 0 %}
+<div id="infoCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+  <div class="carousel-inner">
+    {% for a in avisos %}
+    <div class="carousel-item {% if loop.first %}active{% endif %}" data-bs-interval="{{ a.interval }}">
+      <div class="p-4 text-center bg-{{ a.variant }} text-{{ a.accent }} rounded border border-{{ a.accent }}">
+        <h5 class="mb-2">{{ a.icon }} {{ a.title }}</h5>
+        <p class="mb-0">{{ a.body }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <button class="carousel-control-prev" type="button" data-bs-target="#infoCarousel" data-bs-slide="prev">
+    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    <span class="visually-hidden">Anterior</span>
+  </button>
+  <button class="carousel-control-next" type="button" data-bs-target="#infoCarousel" data-bs-slide="next">
+    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    <span class="visually-hidden">Próximo</span>
+  </button>
+
+  <div class="carousel-indicators mt-2">
+    {% for a in avisos %}
+    <button type="button" data-bs-target="#infoCarousel" data-bs-slide-to="{{ loop.index0 }}"
+            class="{% if loop.first %}active{% endif %}" aria-current="{% if loop.first %}true{% else %}false{% endif %}"
+            aria-label="Slide {{ loop.index }}"></button>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
 
       {% if aluno %}
         <p><b>Nome:</b> {{ aluno.nome }}</p>
@@ -12,7 +45,6 @@
 
         <a href="{{ url_for('meus_agendamentos', aluno_id=aluno.id) }}" class="btn btn-warning">Ver meus agendamentos</a>
 
-        <!-- Botão Agendar Horário com ID para desabilitar -->
         <a id="btnAgendar"
            href="{{ url_for('cadastrar_horario', aluno_id=aluno.id) }}"
            class="btn btn-success">
